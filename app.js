@@ -10,6 +10,56 @@ function getLocalDateString(date = new Date()) {
     return `${year}-${month}-${day}`;
 }
 
+// ===================================
+// Custom Alert & Confirm
+// ===================================
+
+function customAlert(message) {
+    return new Promise((resolve) => {
+        document.getElementById('alert-message').textContent = message;
+        openModal('custom-alert-modal');
+        
+        const handleOk = () => {
+            closeModal('custom-alert-modal');
+            document.getElementById('alert-ok-btn').removeEventListener('click', handleOk);
+            resolve();
+        };
+        
+        document.getElementById('alert-ok-btn').addEventListener('click', handleOk);
+    });
+}
+
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        document.getElementById('confirm-message').textContent = message;
+        openModal('custom-confirm-modal');
+        
+        const handleOk = () => {
+            closeModal('custom-confirm-modal');
+            cleanup();
+            resolve(true);
+        };
+        
+        const handleCancel = () => {
+            closeModal('custom-confirm-modal');
+            cleanup();
+            resolve(false);
+        };
+        
+        const cleanup = () => {
+            document.getElementById('confirm-ok-btn').removeEventListener('click', handleOk);
+            document.getElementById('confirm-cancel-btn').removeEventListener('click', handleCancel);
+        };
+        
+        document.getElementById('confirm-ok-btn').addEventListener('click', handleOk);
+        document.getElementById('confirm-cancel-btn').addEventListener('click', handleCancel);
+    });
+}
+
+// ===================================
+// Data Model
+// ===================================
+
 // Data Model
 let appData = {
     days: [],
