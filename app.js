@@ -2,6 +2,14 @@
 // Tiny Deficit - App Logic
 // ===================================
 
+// Helper to get local date string (YYYY-MM-DD)
+function getLocalDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Data Model
 let appData = {
     days: [],
@@ -9,7 +17,7 @@ let appData = {
 };
 
 // Current state
-let currentDate = new Date().toISOString().split('T')[0];
+let currentDate = getLocalDateString();
 let currentUnit = 'lb'; // for graph
 let isUpdatingWeight = false; // prevent conversion loops
 
@@ -103,14 +111,14 @@ function initializeEventListeners() {
     document.getElementById('prev-day').addEventListener('click', () => {
         const date = new Date(currentDate + 'T12:00:00');
         date.setDate(date.getDate() - 1);
-        currentDate = date.toISOString().split('T')[0];
+        currentDate = getLocalDateString(date);
         loadTodayScreen();
     });
     
     document.getElementById('next-day').addEventListener('click', () => {
         const date = new Date(currentDate + 'T12:00:00');
         date.setDate(date.getDate() + 1);
-        currentDate = date.toISOString().split('T')[0];
+        currentDate = getLocalDateString(date);
         loadTodayScreen();
     });
     
@@ -887,7 +895,7 @@ function exportData() {
     
     const link = document.createElement('a');
     link.href = url;
-    const date = new Date().toISOString().split('T')[0];
+    const date = getLocalDateString();
     link.download = `tiny-deficit-backup-${date}.json`;
     document.body.appendChild(link);
     link.click();
