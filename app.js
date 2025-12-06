@@ -569,12 +569,9 @@ function addPreset() {
 }
 
 async function deletePreset(index) {
-    const confirmed = await customConfirm('Delete this preset?');
-    if (confirmed) {
-        appData.presets.splice(index, 1);
-        saveData();
-        loadPresetsScreen();
-    }
+    appData.presets.splice(index, 1);
+    saveData();
+    loadPresetsScreen();
 }
 
 let editingPresetIndex = null;
