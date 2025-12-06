@@ -635,22 +635,22 @@ async function searchPresetFood() {
     searchBtn.disabled = true;
     
     try {
-        const response = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(name)}&pageSize=1&api_key=DEMO_KEY`);
+        const response = await fetch(`https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(name)}`, {
+            headers: {
+                'X-Api-Key': 'DEMO_KEY'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('API request failed');
+        }
+        
         const data = await response.json();
         
-        if (data.foods && data.foods.length > 0) {
-            const food = data.foods[0];
-            const calorieNutrient = food.foodNutrients.find(n => 
-                n.nutrientName === 'Energy' && n.unitName === 'KCAL'
-            );
-            
-            if (calorieNutrient) {
-                const calories = Math.round(calorieNutrient.value);
-                caloriesInput.value = calories;
-            } else {
-                await customAlert('Could not find calorie information for this food');
-                caloriesInput.value = '';
-            }
+        if (data.items && data.items.length > 0) {
+            const item = data.items[0];
+            const calories = Math.round(item.calories);
+            caloriesInput.value = calories;
         } else {
             await customAlert('Food not found. Please try a different name.');
             caloriesInput.value = '';
@@ -737,22 +737,23 @@ async function lookupFoodCalories() {
     lookupBtn.disabled = true;
     
     try {
-        const response = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(name)}&pageSize=1&api_key=DEMO_KEY`);
+        const response = await fetch(`https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(name)}`, {
+            headers: {
+                'X-Api-Key': 'DEMO_KEY'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('API request failed');
+        }
+        
         const data = await response.json();
         
-        if (data.foods && data.foods.length > 0) {
-            const food = data.foods[0];
-            const calorieNutrient = food.foodNutrients.find(n => 
-                n.nutrientName === 'Energy' && n.unitName === 'KCAL'
-            );
-            
-            if (calorieNutrient) {
-                const calories = Math.round(calorieNutrient.value);
-                caloriesInput.value = calories;
-                caloriesInput.focus();
-            } else {
-                await customAlert('Could not find calorie information for this food');
-            }
+        if (data.items && data.items.length > 0) {
+            const item = data.items[0];
+            const calories = Math.round(item.calories);
+            caloriesInput.value = calories;
+            caloriesInput.focus();
         } else {
             await customAlert('Food not found. Please try a different name or enter calories manually.');
         }
