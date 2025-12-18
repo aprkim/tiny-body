@@ -387,7 +387,10 @@ function initializeEventListeners() {
         document.getElementById('toggle-lb').classList.remove('active');
         renderGraph();
     });
-    
+
+    // Clear progress button
+    document.getElementById('clear-progress-btn').addEventListener('click', confirmClearProgress);
+
     // Export/Import data
     document.getElementById('export-data-btn').addEventListener('click', exportData);
     document.getElementById('import-file-input').addEventListener('change', importData);
@@ -1283,6 +1286,25 @@ function deleteAllData() {
     setTimeout(() => {
         location.reload();
     }, 1500);
+}
+
+async function confirmClearProgress() {
+    const confirmed = await customConfirm('Clear all weight progress data? This cannot be undone.');
+    if (confirmed) {
+        clearProgress();
+    }
+}
+
+function clearProgress() {
+    // Clear weight data from all days
+    appData.days.forEach(day => {
+        if (day.weight) {
+            delete day.weight;
+        }
+    });
+    saveData();
+    renderGraph();
+    customAlert('Weight progress cleared successfully');
 }
 
 // ===================================

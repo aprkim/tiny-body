@@ -1049,6 +1049,13 @@ body {
     text-align: center;
 }
 
+.progress-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-lg);
+    padding: 0 var(--space-lg);
+}
+
 /* ===================================
    Data Management
    =================================== */
