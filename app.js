@@ -63,7 +63,8 @@ function customConfirm(message) {
 // Data Model
 let appData = {
     days: [],
-    presets: []
+    presets: [],
+    exercisePresets: []
 };
 
 // Current state
@@ -79,6 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
     initializeEventListeners();
     loadTodayScreen();
+
+    // Initialize sync pill based on existing sync code
+    const existingCode = getSyncCode();
+    if (existingCode) {
+        updateSyncPill(true);
+        updateSyncCodeDisplay(existingCode);
+    }
 });
 
 // ===================================
@@ -92,7 +100,7 @@ function loadData() {
             appData = JSON.parse(stored);
         } catch (e) {
             console.error('Error loading data:', e);
-            appData = { days: [], presets: [] };
+            appData = { days: [], presets: [], exercisePresets: [] };
         }
     }
 }
@@ -270,7 +278,7 @@ function initializeEventListeners() {
         loadPresetSelectList();
         openModal('preset-select-modal');
     });
-    
+
     document.getElementById('add-new-preset-btn').addEventListener('click', () => {
         document.getElementById('preset-form').reset();
         presetItems = [];
@@ -278,17 +286,63 @@ function initializeEventListeners() {
         document.querySelector('#preset-modal .modal-title').textContent = 'Create Preset Meal';
         openModal('preset-modal');
     });
-    
+
+    document.getElementById('add-new-preset-from-select-btn').addEventListener('click', () => {
+        closeModal('preset-select-modal');
+        document.getElementById('preset-form').reset();
+        presetItems = [];
+        updatePresetItemsList();
+        document.querySelector('#preset-modal .modal-title').textContent = 'Create Preset Meal';
+        openModal('preset-modal');
+    });
+
     document.getElementById('cancel-preset-btn').addEventListener('click', () => {
         document.getElementById('preset-form').reset();
         presetItems = [];
         updatePresetItemsList();
         closeModal('preset-modal');
     });
-    
+
     document.getElementById('preset-form').addEventListener('submit', (e) => {
         e.preventDefault();
         addPreset();
+    });
+
+    // Exercise preset modals
+    document.getElementById('add-exercise-preset-btn').addEventListener('click', () => {
+        loadExercisePresetSelectList();
+        openModal('exercise-preset-select-modal');
+    });
+
+    document.getElementById('add-new-exercise-preset-btn').addEventListener('click', () => {
+        document.getElementById('exercise-preset-form').reset();
+        document.querySelector('#exercise-preset-modal .modal-title').textContent = 'Create Preset Exercise';
+        openModal('exercise-preset-modal');
+    });
+
+    document.getElementById('add-new-exercise-preset-from-select-btn').addEventListener('click', () => {
+        closeModal('exercise-preset-select-modal');
+        document.getElementById('exercise-preset-form').reset();
+        document.querySelector('#exercise-preset-modal .modal-title').textContent = 'Create Preset Exercise';
+        openModal('exercise-preset-modal');
+    });
+
+    document.getElementById('cancel-exercise-preset-btn').addEventListener('click', () => {
+        document.getElementById('exercise-preset-form').reset();
+        closeModal('exercise-preset-modal');
+    });
+
+    document.getElementById('exercise-preset-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        addExercisePreset();
+    });
+
+    // Preset tabs
+    document.querySelectorAll('.preset-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.presetTab;
+            switchPresetTab(tabName);
+        });
     });
     
     // Preset search and add
@@ -357,9 +411,24 @@ function switchScreen(screenName) {
         loadTodayScreen();
     } else if (screenName === 'presets') {
         loadPresetsScreen();
+        loadExercisePresetsScreen();
     } else if (screenName === 'progress') {
         renderGraph();
     }
+}
+
+function switchPresetTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.preset-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`.preset-tab[data-preset-tab="${tabName}"]`).classList.add('active');
+
+    // Update tab content
+    document.querySelectorAll('.preset-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tabName}-presets-tab`).classList.add('active');
 }
 
 // ===================================
@@ -607,6 +676,7 @@ async function deletePreset(index) {
 let editingPresetIndex = null;
 let presetItems = [];
 let foodItems = [];
+let editingExercisePresetIndex = null;
 
 function editPreset(index) {
     editingPresetIndex = index;
@@ -916,6 +986,157 @@ function addPresetToToday(presetId) {
 }
 
 // ===================================
+// Exercise Preset Operations
+// ===================================
+
+function addExercisePreset() {
+    const name = document.getElementById('exercise-preset-name').value.trim();
+    const duration = parseInt(document.getElementById('exercise-preset-duration').value);
+    const calories = parseInt(document.getElementById('exercise-preset-calories').value) || 0;
+    const description = document.getElementById('exercise-preset-description').value.trim();
+
+    if (!name) {
+        customAlert('Please enter a preset name');
+        return;
+    }
+
+    if (isNaN(duration) || duration <= 0) {
+        customAlert('Please enter a valid duration');
+        return;
+    }
+
+    if (editingExercisePresetIndex !== null) {
+        // Editing existing preset
+        appData.exercisePresets[editingExercisePresetIndex] = {
+            ...appData.exercisePresets[editingExercisePresetIndex],
+            name: name,
+            durationMinutes: duration,
+            caloriesBurned: calories,
+            description: description
+        };
+        editingExercisePresetIndex = null;
+    } else {
+        // Adding new preset
+        const preset = {
+            id: 'exercise-preset-' + Date.now(),
+            name: name,
+            durationMinutes: duration,
+            caloriesBurned: calories,
+            description: description
+        };
+        appData.exercisePresets.push(preset);
+    }
+
+    saveData();
+
+    // Reset form and modal title
+    document.getElementById('exercise-preset-form').reset();
+    document.querySelector('#exercise-preset-modal .modal-title').textContent = 'Create Preset Exercise';
+    closeModal('exercise-preset-modal');
+    loadExercisePresetsScreen();
+}
+
+async function deleteExercisePreset(index) {
+    appData.exercisePresets.splice(index, 1);
+    saveData();
+    loadExercisePresetsScreen();
+}
+
+function editExercisePreset(index) {
+    editingExercisePresetIndex = index;
+    const preset = appData.exercisePresets[index];
+
+    document.getElementById('exercise-preset-name').value = preset.name;
+    document.getElementById('exercise-preset-duration').value = preset.durationMinutes;
+    document.getElementById('exercise-preset-calories').value = preset.caloriesBurned || '';
+    document.getElementById('exercise-preset-description').value = preset.description || '';
+
+    // Change modal title
+    document.querySelector('#exercise-preset-modal .modal-title').textContent = 'Edit Preset Exercise';
+
+    openModal('exercise-preset-modal');
+}
+
+function loadExercisePresetsScreen() {
+    const container = document.getElementById('exercise-presets-list');
+
+    if (appData.exercisePresets.length === 0) {
+        container.innerHTML = '<p class="empty-state">No presets yet. Create your first one!</p>';
+        return;
+    }
+
+    container.innerHTML = appData.exercisePresets.map((preset, index) => `
+        <div class="preset-card">
+            <div class="preset-header">
+                <div>
+                    <div class="preset-name">${preset.name}</div>
+                    ${preset.description ? `<div class="preset-description">${preset.description}</div>` : ''}
+                </div>
+                <div class="preset-calories">${preset.durationMinutes} min${preset.caloriesBurned ? ` • ${preset.caloriesBurned} kcal` : ''}</div>
+            </div>
+            <div class="preset-actions">
+                <button class="btn-secondary btn-sm exercise-preset-edit-btn" data-index="${index}">Edit</button>
+                <button class="btn-secondary btn-sm exercise-preset-delete-btn" data-index="${index}">Delete</button>
+            </div>
+        </div>
+    `).join('');
+
+    // Attach event listeners
+    container.querySelectorAll('.exercise-preset-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.index);
+            editExercisePreset(index);
+        });
+    });
+
+    container.querySelectorAll('.exercise-preset-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const index = parseInt(btn.dataset.index);
+            await deleteExercisePreset(index);
+        });
+    });
+}
+
+function loadExercisePresetSelectList() {
+    const container = document.getElementById('exercise-preset-select-list');
+
+    if (appData.exercisePresets.length === 0) {
+        container.innerHTML = '<p class="empty-state">No presets available. Create one first!</p>';
+        return;
+    }
+
+    container.innerHTML = appData.exercisePresets.map((preset) => `
+        <div class="preset-select-item" onclick="addExercisePresetToToday('${preset.id}')">
+            <div>
+                <div style="font-weight: 600;">${preset.name}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">${preset.description || ''}</div>
+            </div>
+            <div style="font-weight: 700; color: var(--primary);">${preset.durationMinutes} min${preset.caloriesBurned ? ` • ${preset.caloriesBurned} kcal` : ''}</div>
+        </div>
+    `).join('');
+}
+
+function addExercisePresetToToday(presetId) {
+    const preset = appData.exercisePresets.find(p => p.id === presetId);
+    if (!preset) return;
+
+    const day = getOrCreateDayData(currentDate);
+    const exercise = {
+        id: 'ex-' + Date.now(),
+        name: preset.name,
+        durationMinutes: preset.durationMinutes,
+        caloriesBurned: preset.caloriesBurned || 0,
+        fromPresetId: preset.id
+    };
+
+    day.exercises.push(exercise);
+    saveData();
+
+    closeModal('exercise-preset-select-modal');
+    loadTodayScreen();
+}
+
+// ===================================
 // Graph
 // ===================================
 
@@ -1018,9 +1239,162 @@ function closeAllModals() {
             document.getElementById('preset-form').reset();
             presetItems = [];
             updatePresetItemsList();
+        } else if (modal.id === 'exercise-preset-modal') {
+            document.getElementById('exercise-preset-form').reset();
         }
         modal.classList.remove('active');
     });
+}
+
+// ===================================
+// Settings - Data Management
+// ===================================
+
+async function confirmResetBrowser() {
+    const confirmed = await customConfirm('This will clear all your data from this browser. Are you sure?');
+    if (confirmed) {
+        resetBrowser();
+    }
+}
+
+function resetBrowser() {
+    localStorage.removeItem('tiny-tweaks-data');
+    appData = { days: [], presets: [], exercisePresets: [] };
+    customAlert('Browser data has been reset. Refreshing...');
+    setTimeout(() => {
+        location.reload();
+    }, 1500);
+}
+
+async function confirmDeleteAllData() {
+    const confirmed = await customConfirm('⚠️ This will permanently delete ALL your data. This action cannot be undone. Are you absolutely sure?');
+    if (confirmed) {
+        const doubleConfirmed = await customConfirm('Final confirmation: Delete everything?');
+        if (doubleConfirmed) {
+            deleteAllData();
+        }
+    }
+}
+
+function deleteAllData() {
+    localStorage.removeItem('tiny-tweaks-data');
+    appData = { days: [], presets: [], exercisePresets: [] };
+    customAlert('All data has been permanently deleted. Refreshing...');
+    setTimeout(() => {
+        location.reload();
+    }, 1500);
+}
+
+// ===================================
+// Sync Code Functions
+// ===================================
+
+// Generate a memorable 6-word sync code
+function generateSyncCode() {
+    const words = [
+        'apple', 'banana', 'cherry', 'dragon', 'eagle', 'forest',
+        'garden', 'harbor', 'island', 'jungle', 'kitchen', 'lemon',
+        'mountain', 'novel', 'ocean', 'piano', 'quiet', 'river',
+        'sunset', 'thunder', 'umbrella', 'village', 'winter', 'yellow'
+    ];
+    const code = [];
+    for (let i = 0; i < 6; i++) {
+        code.push(words[Math.floor(Math.random() * words.length)]);
+    }
+    return code.join('-');
+}
+
+// Get sync code from localStorage
+function getSyncCode() {
+    return localStorage.getItem('tiny-body-sync-code');
+}
+
+// Update sync code display
+function updateSyncCodeDisplay(code) {
+    const el = document.getElementById('syncCodeText');
+    if (el && code) el.textContent = code;
+}
+
+// Update sync pill
+function updateSyncPill(isConnected) {
+    const pill = document.getElementById('syncPill');
+    if (!pill) return;
+    if (isConnected) {
+        pill.textContent = 'ON';
+        pill.style.background = '#E7F1EB';
+        pill.style.border = '1px solid #C8DCD0';
+        pill.style.color = '#3F6B52';
+    } else {
+        pill.textContent = 'OFF';
+        pill.style.background = '#f3f4f6';
+        pill.style.border = '1px solid #e5e7eb';
+        pill.style.color = '#6b7280';
+    }
+}
+
+// Show sync code card
+function showSyncCodeCard() {
+    const card = document.getElementById('syncCodeCard');
+    const textEl = document.getElementById('syncCodeText');
+    let code = getSyncCode();
+
+    // If no code exists, generate one
+    if (!code) {
+        code = generateSyncCode();
+        localStorage.setItem('tiny-body-sync-code', code);
+        updateSyncCodeDisplay(code);
+        updateSyncPill(true);
+    }
+
+    if (textEl) textEl.textContent = code || '—';
+    if (card) card.style.display = 'flex';
+}
+
+// Copy sync code to clipboard
+async function copySyncCode() {
+    const code = getSyncCode();
+    if (!code) return;
+
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(code);
+            const btn = document.querySelector('.sync-copy-btn');
+            if (btn) {
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }
+        }
+    } catch (e) {
+        console.error('Failed to copy sync code:', e);
+    }
+}
+
+// Submit sync code from input
+function submitSyncCode() {
+    const input = document.getElementById('enterSyncCodeInput');
+    const code = input.value.trim().toLowerCase();
+
+    if (!code) {
+        customAlert('Please enter a sync code');
+        return;
+    }
+
+    // Save the sync code
+    localStorage.setItem('tiny-body-sync-code', code);
+    updateSyncCodeDisplay(code);
+    updateSyncPill(true);
+
+    // Show the sync code card with the entered code
+    const card = document.getElementById('syncCodeCard');
+    const textEl = document.getElementById('syncCodeText');
+    if (textEl) textEl.textContent = code;
+    if (card) card.style.display = 'flex';
+
+    customAlert('Sync code set! Note: This is a placeholder. Full sync functionality coming soon.');
+    input.value = '';
 }
 
 // ===================================

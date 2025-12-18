@@ -43,18 +43,25 @@
                 <span class="nav-label">Today</span>
             </button>
             <button class="nav-btn" data-screen="presets">
-                <span class="nav-icon"><i class="fas fa-utensils"></i></span>
+                <span class="nav-icon"><i class="fas fa-star"></i></span>
                 <span class="nav-label">Presets</span>
             </button>
             <button class="nav-btn" data-screen="progress">
                 <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
                 <span class="nav-label">Progress</span>
             </button>
+            <button class="nav-btn" data-screen="settings">
+                <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                <span class="nav-label">Settings</span>
+            </button>
         </nav>
 
         <!-- Today Screen -->
         <div id="today-screen" class="screen active">
             <header class="app-header">
+                <a href="https://tinywins.space" class="back-link">
+                    <i class="fas fa-arrow-left"></i> TinyWins
+                </a>
                 <h1 class="app-title">Tiny Body</h1>
                 <p class="app-tagline">Smart changes. Real progress.</p>
             </header>
@@ -128,34 +135,51 @@
             <div class="card exercise-card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-dumbbell"></i> Exercise Log</h2>
-                    <button id="add-exercise-btn" class="btn-primary btn-sm">+ Exercise</button>
+                    <div class="card-actions">
+                        <button id="add-exercise-preset-btn" class="btn-secondary btn-sm">+ Preset</button>
+                        <button id="add-exercise-btn" class="btn-primary btn-sm">+ Exercise</button>
+                    </div>
                 </div>
                 <div id="exercise-list" class="item-list">
                     <p class="empty-state">No exercise logged yet. Tap + Exercise to start!</p>
                 </div>
-            </div>
-
-            <!-- Data Management -->
-            <div class="card data-card">
-                <h2 class="card-title"><i class="fas fa-database"></i> Data Management</h2>
-                <div class="data-actions">
-                    <button id="export-data-btn" class="btn-secondary"><i class="fas fa-download"></i> Export Data</button>
-                    <label for="import-file-input" class="btn-secondary import-btn">
-                        <i class="fas fa-upload"></i> Import Data
-                    </label>
-                </div>
-                <input type="file" id="import-file-input" accept="application/json,.json" class="hidden">
             </div>
         </div>
 
         <!-- Presets Screen -->
         <div id="presets-screen" class="screen">
             <header class="screen-header">
-                <h1 class="screen-title">Preset Meals</h1>
-                <button id="add-new-preset-btn" class="btn-primary">+ New Preset</button>
+                <h1 class="screen-title">Presets</h1>
             </header>
-            <div id="presets-list" class="presets-container">
-                <p class="empty-state">No presets yet. Create your first one!</p>
+
+            <!-- Preset Tabs -->
+            <div class="preset-tabs">
+                <button class="preset-tab active" data-preset-tab="food">
+                    <i class="fas fa-utensils"></i> Food
+                </button>
+                <button class="preset-tab" data-preset-tab="exercise">
+                    <i class="fas fa-dumbbell"></i> Exercise
+                </button>
+            </div>
+
+            <!-- Food Presets Tab Content -->
+            <div id="food-presets-tab" class="preset-tab-content active">
+                <div class="preset-tab-header">
+                    <button id="add-new-preset-btn" class="btn-primary">+ New Preset</button>
+                </div>
+                <div id="presets-list" class="presets-container">
+                    <p class="empty-state">No presets yet. Create your first one!</p>
+                </div>
+            </div>
+
+            <!-- Exercise Presets Tab Content -->
+            <div id="exercise-presets-tab" class="preset-tab-content">
+                <div class="preset-tab-header">
+                    <button id="add-new-exercise-preset-btn" class="btn-primary">+ New Preset</button>
+                </div>
+                <div id="exercise-presets-list" class="presets-container">
+                    <p class="empty-state">No presets yet. Create your first one!</p>
+                </div>
             </div>
         </div>
 
@@ -173,6 +197,96 @@
             </div>
             <div class="chart-info">
                 <p id="chart-summary" class="chart-summary"></p>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen">
+            <header class="screen-header">
+                <h1 class="screen-title">Settings</h1>
+                <p class="screen-subtitle">Manage sync and preferences</p>
+            </header>
+
+            <!-- Cross-Device Sync Section -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <i class="fas fa-key"></i>
+                    <h3>Cross-Device Sync</h3>
+                    <span class="sync-pill" id="syncPill">OFF</span>
+                </div>
+                <p class="settings-section-description">Use a sync code to access your data across devices and browsers.</p>
+
+                <button class="settings-action-btn" onclick="showSyncCodeCard()">Show My Sync Code</button>
+
+                <div id="syncCodeCard" class="sync-code-card" style="display: none;">
+                    <div class="sync-code-text-container">
+                        <div id="syncCodeText" class="sync-code-text">—</div>
+                    </div>
+                    <button class="sync-copy-btn" onclick="copySyncCode()">Copy</button>
+                </div>
+
+                <div class="sync-input-container">
+                    <input type="text" id="enterSyncCodeInput" placeholder="Enter sync code from another device or browser">
+                    <button class="sync-link-btn" onclick="submitSyncCode()">Link</button>
+                </div>
+            </div>
+
+            <!-- Data Management Section -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <i class="fas fa-trash-alt"></i>
+                    <h3>Data Management</h3>
+                </div>
+
+                <!-- Reset This Browser Option -->
+                <div class="settings-option-card">
+                    <div class="settings-option-header">
+                        <i class="fas fa-redo-alt"></i>
+                        <span>Reset This Browser</span>
+                    </div>
+                    <p class="settings-option-description">Clear all weight, food, exercise data, and presets from this browser only.</p>
+                    <button class="settings-action-btn secondary" onclick="confirmResetBrowser()">Reset Browser</button>
+                </div>
+
+                <!-- Delete All Data Option -->
+                <div class="settings-option-card danger">
+                    <div class="settings-option-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Delete All Data</span>
+                    </div>
+                    <p class="settings-option-description">Permanently remove all your data from this browser. This action cannot be undone.</p>
+                    <button class="settings-action-btn danger" onclick="confirmDeleteAllData()">Delete Everything</button>
+                </div>
+            </div>
+
+            <!-- Export/Import Data Section -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h3>Export / Import Data</h3>
+                </div>
+                <p class="settings-section-description">Backup or restore your weight, food, exercise, and preset data.</p>
+
+                <!-- Export Section -->
+                <div class="settings-option-card">
+                    <div class="settings-option-header">
+                        <i class="fas fa-download"></i>
+                        <span>Export Data</span>
+                    </div>
+                    <p class="settings-option-description">Download your data and optionally include your history.</p>
+                    <button id="export-data-btn" class="settings-action-btn secondary">Export Data</button>
+                </div>
+
+                <!-- Import Section -->
+                <div class="settings-option-card">
+                    <div class="settings-option-header">
+                        <i class="fas fa-upload"></i>
+                        <span>Import Data</span>
+                    </div>
+                    <p class="settings-option-description">Upload a previously exported JSON file to restore your data.</p>
+                    <button class="settings-action-btn secondary" onclick="document.getElementById('import-file-input').click()">Import Data</button>
+                    <input type="file" id="import-file-input" accept="application/json,.json" class="hidden">
+                </div>
             </div>
         </div>
 
@@ -311,7 +425,60 @@
                 <h2 class="modal-title">Select Preset Meal</h2>
                 <button class="modal-close">&times;</button>
             </div>
+            <div class="preset-select-header">
+                <button id="add-new-preset-from-select-btn" class="btn-primary">+ New Preset</button>
+            </div>
             <div id="preset-select-list" class="preset-select-list">
+                <p class="empty-state">No presets available. Create one first!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Preset Modal -->
+    <div id="exercise-preset-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create Preset Exercise</h2>
+            </div>
+            <form id="exercise-preset-form" class="modal-form">
+                <div class="form-group">
+                    <label for="exercise-preset-name">Preset Name</label>
+                    <input type="text" id="exercise-preset-name" placeholder="e.g., Morning run" autocomplete="on" spellcheck="true" autocorrect="on" autocapitalize="words" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="exercise-preset-duration">Duration (minutes)</label>
+                    <input type="number" id="exercise-preset-duration" placeholder="0" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="exercise-preset-calories">Calories Burned (optional)</label>
+                    <input type="number" id="exercise-preset-calories" placeholder="0" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="exercise-preset-description">Note</label>
+                    <textarea id="exercise-preset-description" placeholder="Additional notes..." rows="2" autocomplete="on" spellcheck="true" autocorrect="on" autocapitalize="sentences"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-exercise-preset-btn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Preset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Exercise Preset Select Modal -->
+    <div id="exercise-preset-select-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Select Preset Exercise</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="preset-select-header">
+                <button id="add-new-exercise-preset-from-select-btn" class="btn-primary">+ New Preset</button>
+            </div>
+            <div id="exercise-preset-select-list" class="preset-select-list">
                 <p class="empty-state">No presets available. Create one first!</p>
             </div>
         </div>
